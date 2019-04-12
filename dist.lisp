@@ -1,4 +1,4 @@
-(uiop/package:define-package :gh-dist/dist (:use :cl :ql-dist) (:export :setup) (:nicknames :gh-dist))
+(uiop/package:define-package :gh-dist/dist (:use :cl :ql-dist) (:export :setup :install) (:nicknames :gh-dist))
 (in-package :gh-dist/dist)
 ;;;don't edit above
 
@@ -27,8 +27,7 @@
 ;;(gethash "link" (nth-value 2 (dex:get "https://api.github.com/repos/roswell/quicklisp/releases")))
 ;;(gethash "link" (nth-value 2 (dex:get "https://api.github.com/repositories/74199560/releases?page=4")))
 
-;;; dist-update
-(defun install-github (url &key (prompt t) replace)
+(defun install (url &key (prompt t) replace)
   ;;tbd
   )
 
@@ -42,4 +41,3 @@
             ;; can't undo https support.
             ))
   t)
-
