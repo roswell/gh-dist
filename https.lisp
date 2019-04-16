@@ -10,11 +10,13 @@
   (values (make-instance 'ql-http::header :status 200)
           (probe-file file)))
 
-(defun register-fetch (&key overwirte (methods '("https")))
-  (declare (ignorable overwirte methods))
+(defun register-fetch (&key overwrite
+                            (methods '("https"))
+                            (function 'fetch-via-dexador))
+  (declare (ignorable methods))
   (dolist (x methods)
     (when (or (not (find x ql-http:*fetch-scheme-functions* :test 'equal :key 'first))
-              overwirte)
+              overwrite)
       (setf ql-http:*fetch-scheme-functions*
-            (acons x 'fetch-via-dexador
+            (acons x function
                    (remove x ql-http:*fetch-scheme-functions* :key 'first :test 'equal))))))
