@@ -13,6 +13,7 @@ $ ros install roswell/gh-dist || git clone https://github.com/roswell/gh-dist ~/
 ```
 (ql:quickload "gh-dist" :silent t)
 (gh-dist:setup)
+(gh-dist:install "roswell/quicklisp" :version "2019-03-07")
 ```
 
 ## Author

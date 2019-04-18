@@ -1,4 +1,8 @@
-(uiop/package:define-package :gh-dist/dist (:use :cl :ql-dist) (:export :setup :install-gh) (:nicknames :gh-dist))
+(uiop/package:define-package :gh-dist/dist
+  (:use :cl :ql-dist)
+  (:shadow :install)
+  (:export :setup :install)
+  (:nicknames :gh-dist))
 (in-package :gh-dist/dist)
 ;;;don't edit above
 
@@ -46,7 +50,7 @@
                 ("release-index-url" ,(format nil "https://github.com/~A/releases/download/~A/releases.txt"
                                               user/repos version))))))
 
-(defun install-gh (url &key (prompt t) replace version)
+(defun install (url &key (prompt t) replace version)
   (block nil
     (let ((temp-file (ql:qmerge "tmp/install-dist-distinfo.txt")))
       (ensure-directories-exist temp-file)
