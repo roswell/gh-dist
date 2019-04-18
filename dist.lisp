@@ -16,10 +16,6 @@
   ;;tbd.... need it?
   )
 
-;;(dex:get "https://api.github.com/repos/roswell/quicklisp/releases")
-;;(gethash "link" (nth-value 2 (dex:get "https://api.github.com/repos/roswell/quicklisp/releases")))
-;;(gethash "link" (nth-value 2 (dex:get "https://api.github.com/repositories/74199560/releases?page=4")))
-
 (defun filter-gh-release (&key allow-draft allow-prerelease)
   (lambda (release)
     (and (if allow-draft
