@@ -3,7 +3,7 @@
   :depends-on(:dexador
               :jonathan)
   :class :package-inferred-system
-  :components((:file "https")
-              (:file "dist"))
+  :components(#+quicklisp(:file "https")
+              #+quicklisp(:file "dist"))
   :author "SANO Masatoshi"
   :mailto "snmsts@gmail.com")
