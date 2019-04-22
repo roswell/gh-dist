@@ -21,8 +21,15 @@
         collect (ql-dist::make-dist-from-file file :class 'gh-dist)))
 
 (defmethod available-versions ((dist gh-dist))
-  (let ((url (format nil "https://api.github.com/repos/~A/git/refs/tags"
+  (let ((temp (ql:qmerge "tmp/dist-versions.txt"))
+        (url (format nil "https://api.github.com/repos/~A/git/refs/tags"
                      (substitute #\/ #\- (name dist) :count 1))))
+    (ensure-directories-exist temp)
+    (ql-util:delete-file-if-exists temp)
+    (handler-case
+        (ql-http:fetch url temp :quietly t)
+      (ql-http:unexpected-http-status ()
+        (return-from available-versions nil)))
     (flet ((ref (x)
              (search "\"ref\":" x)))
       (nreverse
@@ -31,18 +38,16 @@
                                         (butlast (cdddr (uiop:split-string
                                                          (second (uiop:split-string x :separator '(#\:)))
                                                          :separator'(#\" #\/)))))))
-                   (cons version (format nil "~A~A"
-                                         (ql-dist::distinfo-subscription-url dist)
-                                         version))))
+                   (cons version (format nil "~A~A" (ql-dist::distinfo-subscription-url dist) version))))
                (apply #'append
                       (mapcar (lambda (x)
                                 (remove-if-not #'ref (uiop:split-string x :separator '(#\,))))
-                              (remove-if-not #'ref (uiop:split-string (dex:get url) :separator '(#\{))))))))))
+                              (remove-if-not #'ref (uiop:split-string (uiop:read-file-string temp) :separator '(#\{))))))))))
 
 (defun fetch-dist (user/repos file &key version)
   (unless version
     (setf version
-          (first (available-versions (make-instance 'gh-dist :name user/repos)))))
+          (first (first (available-versions (make-instance 'gh-dist :name user/repos))))))
   (with-open-file (s file
                      :direction :output
                      :if-exists :rename-and-delete)
@@ -106,13 +111,22 @@
                    (string/= (version dist) (version new)))
           new)))))
 
+(defun register-fetch (&key overwrite
+                            (methods '())
+                            (function nil))
+  (declare (ignorable methods))
+  (unless function
+    (error "function should be set for register-fetch"))
+  (dolist (x methods)
+    (when (or (not (find x ql-http:*fetch-scheme-functions* :test 'equal :key 'first))
+              overwrite)
+      (setf ql-http:*fetch-scheme-functions*
+            (acons x function
+                   (remove x ql-http:*fetch-scheme-functions* :key 'first :test 'equal))))))
+
 (defun setup (&key (enable t))
   (if enable 
-      (progn 
-        (pushnew 'gh-dist-enumeration-function *dist-enumeration-functions*)
-        (gh-dist/https:register-fetch))
+      (pushnew 'gh-dist-enumeration-function *dist-enumeration-functions*)
       (setf *dist-enumeration-functions*
-            (remove 'gh-dist-enumeration-function *dist-enumeration-functions*)
-            ;; can't undo https support.
-            ))
+            (remove 'gh-dist-enumeration-function *dist-enumeration-functions*)))
   t)

@@ -1,4 +1,4 @@
-(uiop/package:define-package :gh-dist/https (:use :cl) (:export :register-fetch))
+(uiop/package:define-package :gh-dist/https (:use :cl) (:import-from :dexador) (:export :register-fetch))
 (in-package :gh-dist/https)
 ;;;don't edit above
 
@@ -10,13 +10,3 @@
   (values (make-instance 'ql-http::header :status 200)
           (probe-file file)))
 
-(defun register-fetch (&key overwrite
-                            (methods '("https"))
-                            (function 'fetch-via-dexador))
-  (declare (ignorable methods))
-  (dolist (x methods)
-    (when (or (not (find x ql-http:*fetch-scheme-functions* :test 'equal :key 'first))
-              overwrite)
-      (setf ql-http:*fetch-scheme-functions*
-            (acons x function
-                   (remove x ql-http:*fetch-scheme-functions* :key 'first :test 'equal))))))
