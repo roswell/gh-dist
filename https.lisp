@@ -1,4 +1,4 @@
-(uiop/package:define-package :gh-dist/https (:use :cl) (:import-from :dexador) (:export :register-fetch))
+(uiop/package:define-package :gh-dist/https (:use :cl) (:import-from :dexador) (:export :fetch-via-dexador))
 (in-package :gh-dist/https)
 ;;;don't edit above
 
@@ -9,4 +9,3 @@
              :if-exists :supersede)
   (values (make-instance 'ql-http::header :status 200)
           (probe-file file)))
-

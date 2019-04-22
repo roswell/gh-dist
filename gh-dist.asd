@@ -1,7 +1,7 @@
 ;;don't edit
 (defsystem "gh-dist"
-  :depends-on()
   :class :package-inferred-system
-  :components(#+quicklisp(:file "dist"))
+  :depends-on (#+quicklisp"gh-dist/dist")
   :author "SANO Masatoshi"
   :mailto "snmsts@gmail.com")
+(defsystem "ql-dist" :depends-on ("quicklisp"))
