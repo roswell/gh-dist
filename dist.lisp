@@ -8,6 +8,10 @@
 
 (defclass gh-dist (dist) ())
 
+(defmethod ql-dist::distinfo-subscription-url ((dist gh-dist))
+  (format nil "github://~A/"
+          (substitute #\/ #\- (name dist) :count 1)))
+
 (defmethod install-metadata-file ((dist gh-dist))
   (relative-to dist "gh-info.txt"))
 
@@ -17,38 +21,38 @@
         collect (ql-dist::make-dist-from-file file :class 'gh-dist)))
 
 (defmethod available-versions ((dist gh-dist))
-  ;;tbd.... need it?
-  )
-
-(defun filter-gh-release (&key allow-draft allow-prerelease)
-  (lambda (release)
-    (and (if allow-draft
-             t
-             (not (getf release :|draft|)))
-         (if allow-prerelease
-             t
-             (not (getf release :|prerelease|)))
-         (let ((list (mapcar (lambda (x) (getf x :|name|)) (getf release :|assets|))))
-           (and (find "releases.txt" list :test 'equal)
-                (find "systems.txt" list :test 'equal)))
-         (getf release :|tag_name|))))
+  (let ((url (format nil "https://api.github.com/repos/~A/git/refs/tags"
+                     (substitute #\/ #\- (name dist) :count 1))))
+    (flet ((ref (x)
+             (search "\"ref\":" x)))
+      (nreverse
+       (mapcar (lambda (x)
+                 (let ((version (format nil "~{~A~^/~}"
+                                        (butlast (cdddr (uiop:split-string
+                                                         (second (uiop:split-string x :separator '(#\:)))
+                                                         :separator'(#\" #\/)))))))
+                   (cons version (format nil "~A~A"
+                                         (ql-dist::distinfo-subscription-url dist)
+                                         version))))
+               (apply #'append
+                      (mapcar (lambda (x)
+                                (remove-if-not #'ref (uiop:split-string x :separator '(#\,))))
+                              (remove-if-not #'ref (uiop:split-string (dex:get url) :separator '(#\{))))))))))
 
 (defun fetch-dist (user/repos file &key version)
   (unless version
-    (let* ((url (format nil "https://api.github.com/repos/~A/releases" user/repos))
-           (cont (jojo:parse (dex:get url))))
-      (setf version
-            (getf (first (remove-if-not (filter-gh-release) cont)) :|tag_name|))))
+    (setf version
+          (first (available-versions (make-instance 'gh-dist :name user/repos)))))
   (with-open-file (s file
-                       :direction :output
-                       :if-exists :rename-and-delete)
-      (format s "~{~{~A: ~A~%~}~}"
-              `(("name" ,(substitute #\- #\/ user/repos))
-                ("version" ,version)
-                ("system-index-url" ,(format nil "https://github.com/~A/releases/download/~A/systems.txt"
-                                             user/repos version))
-                ("release-index-url" ,(format nil "https://github.com/~A/releases/download/~A/releases.txt"
-                                              user/repos version))))))
+                     :direction :output
+                     :if-exists :rename-and-delete)
+    (format s "~{~{~A: ~A~%~}~}"
+            `(("name" ,(substitute #\- #\/ user/repos :count 1))
+              ("version" ,version)
+              ("system-index-url" ,(format nil "https://github.com/~A/releases/download/~A/systems.txt"
+                                           user/repos version))
+              ("release-index-url" ,(format nil "https://github.com/~A/releases/download/~A/releases.txt"
+                                            user/repos version))))))
 
 (defun install (url &key (prompt t) replace version)
   (block nil
@@ -84,7 +88,7 @@
           new-dist)))))
 
 (defmethod available-update ((dist gh-dist))
-  (let ((url (substitute #\/ #\-  (name dist)))
+  (let ((url (substitute #\/ #\- (name dist) :count 1))
         (target (ql:qmerge "tmp/distinfo-update/gh-info.txt"))
         (update-directory (ql:qmerge "tmp/distinfo-update/")))
     (when (ql-dist::probe-directory update-directory)

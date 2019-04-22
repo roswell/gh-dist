@@ -1,7 +1,6 @@
 ;;don't edit
 (defsystem "gh-dist"
-  :depends-on(:dexador
-              :jonathan)
+  :depends-on(:dexador)
   :class :package-inferred-system
   :components(#+quicklisp(:file "https")
               #+quicklisp(:file "dist"))
